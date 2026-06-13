@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>企業營運戰情中樞</title>
+  <style>
+    /* ================= 外觀樣式 (CSS) ================= */
+    :root {
+      --primary: #2c3e50; --secondary: #34495e; --accent: #3498db; 
+      --success: #2ecc71; --danger: #e74c3c; --warning: #f1c40f; 
+      --bg-color: #f4f7f6; --card-bg: #ffffff;
+    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #333; }
+    h1 { text-align: center; color: var(--primary); margin-bottom: 20px; font-size: 26px; font-weight: 600; }
+    
+    /* 導覽列 */
+    .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-btn { padding: 10px 20px; border: none; background: #e0e6ed; color: var(--secondary); border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.3s; }
+    .tab-btn:hover { background: #cbd5e1; }
+    .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    
+    .tab-content { display: none; animation: fadeIn 0.3s ease-in; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 儀表板卡片 */
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
+    .card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 18px; }
+    
+    /* 按鈕樣式 */
+    .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: 0.2s; color: white; }
+    .btn-primary { background: var(--accent); }
+    .btn-primary:hover { background: #2980b9; }
+    .btn-danger { background: var(--danger); }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-success { background: var(--success); }
+    
+    /* 會議室專屬樣式 */
+    .meeting-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .transcript-box { width: 100%; height: 250px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; line-height: 1.6; background: #fafafa; resize: vertical; box-sizing: border-box; }
+    .recording-indicator { display: none; color: var(--danger); font-weight: bold; animation: pulse 1.5s infinite; margin-left: 10px; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    /* 表單與彈出視窗 */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-start; overflow-y: auto; padding-top: 40px; padding-bottom: 40px; }
+    .modal-content { background: white; width: 90%; max-width: 900px; padding: 25px; border-radius: 12px; position: relative; }
+    .task-input-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 15px; position: relative; }
+    .task-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .task-grid select, .task-grid input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .full-width { grid-column: span 3; }
+    .conflict-alert { background: #ffe3e5; border-left: 4px solid #dc3545; padding: 10px; margin-top: 10px; font-size: 13px; color: #dc3545; border-radius: 4px; font-weight: bold; }
+
+    /* 系統載入中遮罩 */
+    .sys-loading { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; font-size: 18px; font-weight: bold; color: var(--primary); }
+    .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div id="sysLoading" class="sys-loading">
+    <div class="spinner"></div>
+    <div id="sysLoadingText">系統連線中，請稍候...</div>
+  </div>
+
+  <h1 id="pageTitle">📊 企業營運戰情中樞</h1>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('view-overview')">📈 總覽儀表板</button>
+    <button class="tab-btn" onclick="switchTab('view-ai-meeting')">🎙️ AI 語音會議室</button>
+  </div>
+
+  <div id="view-overview" class="tab-content active">
+    <div class="dashboard-grid">
+      <div class="card">
+        <h3>📌 快速操作</h3>
+        <p>歡迎使用企業戰情中樞。您可以切換至「AI 語音會議室」進行會議錄音與自動萃取待辦事項。</p>
+        <button class="btn btn-primary" onclick="openBatchModal()">➕ 手動新增任務</button>
+      </div>
+      <div class="card">
+        <h3>💡 系統狀態</h3>
+        <p id="systemStatus">等待資料載入中...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-ai-meeting" class="tab-content">
+    <div class="card">
+      <h3>🎙️ 智能會議助理</h3>
+      <div class="meeting-controls">
+        <button id="btnStartRecord" class="btn btn-primary" onclick="startDictation()">🎤 開始錄音</button>
+        <button id="btnStopRecord" class="btn btn-danger" onclick="stopDictation()" style="display:none;">⏹ 停止錄音</button>
+        <button id="btnBossMode" class="btn btn-warning" onclick="toggleBossMode()" style="display:none;">👑 標記：老闆裁示 (開啟)</button>
+        <span id="recordingIndicator" class="recording-indicator">🔴 錄音中...</span>
+      </div>
+      <textarea id="transcriptBox" class="transcript-box" placeholder="錄音內容將顯示於此... (您也可以直接貼上現有的會議逐字稿)"></textarea>
+      <div style="margin-top: 15px; text-align: right;">
+        <button class="btn btn-success" onclick="callAIToProcess()">🤖 呼叫 AI 梳理與防撞檢查</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="batchModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 style="margin-top:0; color:#2c3e50;">📝 任務建立與草稿審查</h2>
+      <div id="dynamicTasksContainer">
+        </div>
+      <div style="margin-top: 15px; display: flex; justify-content: space-between;">
+        <button class="btn btn-primary" onclick="addBatchRow()">➕ 新增一筆</button>
+        <div>
+          <button class="btn" style="background:#95a5a6;" onclick="closeBatchModal()">取消</button>
+          <button class="btn btn-success" onclick="submitBatchTasks()">✅ 確認發佈 (寫入並通知)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ⭐⭐⭐ 這是最重要的設定！把您在 GAS 部署拿到的網址貼在這裡 ⭐⭐⭐
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyKxIMQx_K_-3QmP1lJBOtk1a-GSDsfZgCCNWV9IQjQJ1i3d7ooKQ6K8Flk1ojhcRYMcw/exec"; 
+
+    let globalData = null; 
+    let sysUsers = []; 
+    let sysDepts = []; 
+    let recognition; 
+    let isRecording = false; 
+    let isBossMode = false;
+
+    // 網頁一載入，就去跟後台要資料
+    window.onload = async function() {
+      try {
+        document.getElementById('sysLoadingText').innerText = "正在載入後台資料...";
+        
+        // 抓取人員與部門名單 (給下拉選單用)
+        const formRes = await fetch(GAS_API_URL + "?action=getFormsData");
+        const formData = await formRes.json();
+        sysUsers = formData.users || []; 
+        sysDepts = formData.depts || [];
+        
+        document.getElementById('systemStatus').innerHTML = `✅ 資料庫連線成功！<br>共載入 ${sysUsers.length} 位同仁資料。`;
+        document.getElementById('sysLoading').style.display = 'none'; 
+        
+      } catch (error) {
+        document.getElementById('sysLoadingText').innerText = "❌ 載入失敗，請確認 API 網址是否正確。";
+        console.error("Fetch error:", error);
+      }
+      
+      initSpeechRecognition();
+    };
+
+    // 切換頁籤
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // ==========================================
+    // 🎤 語音辨識邏輯 (麥克風脫鉤解鎖區)
+    // ==========================================
+    function initSpeechRecognition() {
+      if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'zh-TW';
+
+        recognition.onresult = function(event) {
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              let text = event.results[i][0].transcript;
+              if (isBossMode) text = "\n【👑老闆裁示】： " + text + "\n";
+              finalTranscript += text;
+            }
+          }
+          if (finalTranscript !== '') {
+            const box = document.getElementById('transcriptBox');
+            box.value += finalTranscript;
+            box.scrollTop = box.scrollHeight;
+          }
+        };
+
+        recognition.onerror = function(event) { console.error("語音辨識錯誤: ", event.error); };
+        recognition.onend = function() {
+          if (isRecording) recognition.start(); // 防止意外中斷，自動重啟
+        };
+      } else {
+        alert("⚠️ 您的瀏覽器不支援語音辨識，請使用 Google Chrome。");
+      }
+    }
+
+    function startDictation() {
+      if (!recognition) return alert("瀏覽器不支援語音功能");
+      recognition.start();
+      isRecording = true;
+      document.getElementById('btnStartRecord').style.display = 'none';
+      document.getElementById('btnStopRecord').style.display = 'inline-block';
+      document.getElementById('btnBossMode').style.display = 'inline-block';
+      document.getElementById('recordingIndicator').style.display = 'inline-block';
+    }
+
+    function stopDictation() {
+      isRecording = false;
+      recognition.stop();
+      document.getElementById('btnStartRecord').style.display = 'inline-block';
+      document.getElementById('btnStopRecord').style.display = 'none';
+      document.getElementById('btnBossMode').style.display = 'none';
+      document.getElementById('recordingIndicator').style.display = 'none';
+    }
+
+    function toggleBossMode() {
+      isBossMode = !isBossMode;
+      const btn = document.getElementById('btnBossMode');
+      if (isBossMode) {
+        btn.innerText = "👑 標記：老闆裁示 (關閉)";
+        btn.style.background = "#e74c3c";
+      } else {
+        btn.innerText = "👑 標記：老闆裁示 (開啟)";
+        btn.style.background = "#f1c40f";
+      }
+    }
+
+    // ==========================================
+    // 🤖 呼叫 AI 與資料送出邏輯
+    // ==========================================
+    async function callAIToProcess() {
+      const text = document.getElementById('transcriptBox').value.trim();
+      if (text.length < 10) { alert("請先錄音或貼上足夠的會議紀錄內容！"); return; }
+      
+      alert("✅ 麥克風與前端脫鉤測試成功！\n您剛剛輸入的內容長度為：" + text.length + " 字。\n\n(目前為安全測試模式，確認錄音正常後，我們再接上真正的 AI 大腦)");
+      // 為了避免一開始就報錯，先用測試訊息。確認您能順利錄音後，我會教您把這行換成真實的 AI 呼叫！
+    }
+
+    // 打開發佈視窗
+    function openBatchModal() {
+      document.getElementById('dynamicTasksContainer').innerHTML = '';
+      addBatchRow();
+      document.getElementById('batchModal').style.display = 'flex';
+    }
+
+    function closeBatchModal() { document.getElementById('batchModal').style.display = 'none'; }
+
+    // 新增一筆任務卡片
+    function addBatchRow() {
+      let deptOptions = '<option value="">選擇部門</option>';
+      sysDepts.forEach(d => deptOptions += `<option value="${d}">${d}</option>`);
+      let userOptions = '<option value="">選擇負責人</option>';
+      sysUsers.forEach(u => userOptions += `<option value="${u}">${u}</option>`);
+
+      const cardHtml = `
+        <div class="task-input-card">
+          <button style="position:absolute; top:10px; right:10px; background:red; color:white; border:none; border-radius:50%; cursor:pointer;" onclick="this.parentElement.remove()">X</button>
+          <div class="task-grid">
+            <select class="t-record-type" onchange="toggleDate(this)"><option value="待辦">待辦</option><option value="結論">結論</option></select>
+            <select class="t-level"><option value="一般">一般</option><option value="重要">重要</option><option value="緊急">緊急</option></select>
+            <input type="date" class="t-date">
+            <select class="t-dept">${deptOptions}</select>
+            <select class="t-owner">${userOptions}</select>
+            <input type="text" class="t-summary" placeholder="主旨摘要 (必填)">
+            <input type="text" class="t-details full-width" placeholder="詳細說明...">
+          </div>
+        </div>
+      `;
+      document.getElementById('dynamicTasksContainer').insertAdjacentHTML('beforeend', cardHtml);
+    }
+
+    function toggleDate(selectElem) {
+      const dateInput = selectElem.parentElement.querySelector('.t-date');
+      dateInput.disabled = (selectElem.value === '結論');
+      if (selectElem.value === '結論') dateInput.value = '';
+    }
+
+    // 送出至後台
+    async function submitBatchTasks() {
+      const cards = document.querySelectorAll('.task-input-card');
+      let tasks = []; let hasError = false;
+      cards.forEach((card, index) => {
+        const recordType = card.querySelector('.t-record-type').value;
+        const level = card.querySelector('.t-level').value; 
+        const dept = card.querySelector('.t-dept').value;
+        const owner = card.querySelector('.t-owner').value; 
+        const date = card.querySelector('.t-date').value;
+        const summary = card.querySelector('.t-summary').value.trim(); 
+        const details = card.querySelector('.t-details').value.trim();
+        
+        if(!dept || !owner || !summary || (recordType === '待辦' && !date)) { 
+          alert(`第 ${index + 1} 筆紀錄資料不完整！(部門、負責人、主旨、日期為必填)`); 
+          hasError = true; return; 
+        }
+        tasks.push({ recordType, level, dept, owner, dueDate: date, summary, details, coOwners: "", overrideId: "" });
+      });
+
+      if(hasError || tasks.length === 0) return;
+      if(confirm(`確定送出這 ${tasks.length} 筆紀錄並發布 LINE 通知嗎？`)) {
+        document.getElementById('sysLoading').style.display = 'flex';
+        document.getElementById('sysLoadingText').innerText = "🔄 寫入資料與發送 LINE 通知中...";
+        
+        try {
+          const response = await fetch(GAS_API_URL + "?action=submitTasks", {
+            method: 'POST',
+            body: JSON.stringify(tasks),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+          });
+          const result = await response.json();
+          if(result.status === 'success') {
+             alert(`🎉 成功寫入 ${result.count} 筆紀錄！`);
+             closeBatchModal();
+             window.location.reload(); 
+          } else { throw new Error(result.message); }
+        } catch(err) {
+           document.getElementById('sysLoading').style.display = 'none'; 
+           alert("❌ 送出失敗：\n" + err.message);
+        }
+      }
+    }
+  </script>
+</body>
+</html>
