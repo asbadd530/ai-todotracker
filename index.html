@@ -1,124 +1,161 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>企業營運戰情中樞</title>
-  <style>
-    /* ================= 外觀樣式 (CSS) ================= */
-    :root {
-      --primary: #2c3e50; --secondary: #34495e; --accent: #3498db; 
-      --success: #2ecc71; --danger: #e74c3c; --warning: #f1c40f; 
-      --bg-color: #f4f7f6; --card-bg: #ffffff;
-    }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #333; }
-    h1 { text-align: center; color: var(--primary); margin-bottom: 20px; font-size: 26px; font-weight: 600; }
-    
-    /* 導覽列 */
-    .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    .tab-btn { padding: 10px 20px; border: none; background: #e0e6ed; color: var(--secondary); border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.3s; }
-    .tab-btn:hover { background: #cbd5e1; }
-    .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    
-    .tab-content { display: none; animation: fadeIn 0.3s ease-in; }
-    .tab-content.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <title>企業營運戰情中樞</title>
+    <style>
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+      h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; font-size: 24px; }
+      .loading { text-align: center; font-size: 18px; color: #666; margin-top: 50px; }
+      .tabs-container { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+      .tab-btn { padding: 12px 30px; border: none; background: #e9ecef; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; color: #495057; transition: all 0.3s ease; }
+      .tab-btn:hover { background: #dde2e6; }
+      .tab-btn.active { background: #0d6efd; color: white; box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3); }
+      #btn-tab-conclusions.active { background: #27ae60; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3); }
+      #btn-tab-meeting.active { background: #8e44ad; box-shadow: 0 4px 12px rgba(142, 68, 173, 0.3); } /* AI會議專屬色 */
+      
+      .global-header { max-width: 1000px; margin: 0 auto 20px auto; }
+      .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+      .kpi-card { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-bottom: 5px solid #ccc; transition: transform 0.2s; }
+      .kpi-card.danger { border-bottom-color: #dc3545; } .kpi-card.warning { border-bottom-color: #ffc107; } .kpi-card.progress { border-bottom-color: #0d6efd; }
+      .kpi-title { font-size: 16px; color: #6c757d; font-weight: bold; margin-bottom: 10px; }
+      .kpi-value { font-size: 42px; font-weight: 900; color: #212529; line-height: 1; }
+      .kpi-value.danger-text { color: #dc3545; }
+      .filter-box { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: center; }
+      .filter-box select { padding: 10px 15px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 14px; font-weight: bold; outline: none; cursor: pointer; }
+      
+      .tab-content { display: none; }
+      .tab-content.active { display: block; animation: fadeIn 0.4s; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      
+      .overview-table-container { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin: 0 auto 30px auto; max-width: 1000px; }
+      .overview-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      .overview-table th, .overview-table td { padding: 14px 12px; text-align: center; border-bottom: 1px solid #dee2e6; font-size: 15px; }
+      .overview-table th { background-color: #f8f9fa; color: #495057; font-weight: bold; }
+      .overview-table tr:hover { background-color: #f8f9fa; }
+      .num-badge { padding: 4px 10px; border-radius: 50px; font-weight: bold; font-size: 14px; }
+      .badge-danger { background-color: #ffe3e5; color: #dc3545; } .badge-warning { background-color: #fff3cd; color: #856404; } .badge-primary { background-color: #e7f1ff; color: #0d6efd; } .badge-zero { color: #ccc; font-weight: normal; }
+      
+      .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+      .user-card { background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
+      .user-header { background: #34495e; color: white; padding: 15px; font-size: 18px; font-weight: bold; text-align: center; }
+      .task-section { padding: 15px; flex-grow: 1; }
+      .section-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #eee; }
+      .title-pending { color: #e74c3c; border-color: #e74c3c; } .title-progress { color: #3498db; border-color: #3498db; } .title-conclusion { color: #27ae60; border-color: #27ae60; }
+      .task-item { background: #f9f9f9; border-left: 4px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 13px; }
+      .task-item.pending { border-left-color: #e74c3c; background: #fdf5f4; } .task-item.progress { border-left-color: #3498db; } .task-item.conclusion { border-left-color: #27ae60; background: #f4fdf7; }
+      .task-id { font-weight: bold; color: #555; }
+      
+      .fab-button { position: fixed; bottom: 30px; right: 30px; background-color: #0d6efd; color: white; border-radius: 50px; padding: 15px 25px; font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4); cursor: pointer; z-index: 1000; transition: all 0.3s ease; border: none; }
+      .fab-button:hover { background-color: #0b5ed7; transform: translateY(-3px); }
+      .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 9998; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+      .custom-modal-content { background-color: #f8f9fa; width: 95%; max-width: 1200px; height: 85vh; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; animation: modalFadeIn 0.3s ease; }
+      .custom-modal-header { background-color: #212529; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+      .custom-modal-header h3 { margin: 0; font-size: 22px; }
+      .close-btn { color: white; font-size: 28px; cursor: pointer; text-decoration: none; line-height: 1; }
+      .custom-modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; }
+      .custom-modal-footer { padding: 15px 20px; background-color: white; border-top: 1px solid #dee2e6; display: flex; justify-content: space-between; }
+      .task-input-card { background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #0d6efd; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; position: relative; }
+      .remove-row-btn { position: absolute; top: 15px; right: 15px; background: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+      .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; }
+      .col-2 { grid-column: span 2; } .col-3 { grid-column: span 3; } .col-4 { grid-column: span 4; } .col-6 { grid-column: span 6; } .col-8 { grid-column: span 8; } .col-12 { grid-column: span 12; }
+      .input-label { font-size: 14px; font-weight: bold; color: #495057; margin-bottom: 5px; display: block; }
+      .input-field { width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+      textarea.input-field { resize: vertical; }
+      .btn-primary-custom { background: #0d6efd; color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold;}
+      .btn-outline-custom { background: white; color: #0d6efd; border: 1px solid #0d6efd; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold;}
+      .sys-loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: #0d6efd; flex-direction: column;}
+      
+      /* AI 會議室專屬樣式 */
+      .meeting-container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+      .mic-toolbar { display: flex; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; align-items: center;}
+      .btn-mic { padding: 10px 20px; font-size: 16px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 8px;}
+      .btn-mic.start { background: #e7f1ff; color: #0d6efd; }
+      .btn-mic.stop { background: #ffe3e5; color: #dc3545; display: none; }
+      .btn-boss { background: #fff3cd; color: #856404; border: 2px solid #ffc107; font-size: 18px; padding: 10px 25px; border-radius: 50px; cursor: pointer; font-weight: bold; transition: all 0.2s;}
+      .btn-boss.active { background: #ffc107; color: #000; box-shadow: 0 0 15px rgba(255,193,7,0.6); transform: scale(1.05); }
+      #transcriptBox { width: 100%; height: 400px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; line-height: 1.6; overflow-y: auto; background: #fafafa; color: #666; box-sizing: border-box; }
+      .boss-text { color: #b8860b; font-weight: bold; font-size: 18px; background: #fffdf5; padding: 2px 5px; border-radius: 4px; }
+      .conflict-alert { background: #ffe3e5; border-left: 4px solid #dc3545; padding: 10px; margin-top: 10px; font-size: 13px; color: #dc3545; border-radius: 4px; font-weight: bold;}
+    </style>
+  </head>
+  
+  <body>
+    <h1 id="pageTitle">📊 企業營運戰情中樞</h1>
 
-    /* 儀表板卡片 */
-    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
-    .card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    .card h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; font-size: 18px; }
-    
-    /* 按鈕樣式 */
-    .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; transition: 0.2s; color: white; }
-    .btn-primary { background: var(--accent); }
-    .btn-primary:hover { background: #2980b9; }
-    .btn-danger { background: var(--danger); }
-    .btn-danger:hover { background: #c0392b; }
-    .btn-success { background: var(--success); }
-    
-    /* 會議室專屬樣式 */
-    .meeting-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-    .transcript-box { width: 100%; height: 250px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 15px; line-height: 1.6; background: #fafafa; resize: vertical; box-sizing: border-box; }
-    .recording-indicator { display: none; color: var(--danger); font-weight: bold; animation: pulse 1.5s infinite; margin-left: 10px; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    <div class="tabs-container">
+      <button id="btn-tab-overview" class="tab-btn active" onclick="switchTab('view-overview')">📊 待辦數據總覽</button>
+      <button id="btn-tab-details" class="tab-btn" onclick="switchTab('view-details')">📝 個人待辦明細</button>
+      <button id="btn-tab-conclusions" class="tab-btn" onclick="switchTab('view-conclusions')">📌 會議結論佈達</button>
+      <button id="btn-tab-meeting" class="tab-btn" onclick="switchTab('view-meeting')">🎙️ AI 會議梳理台</button>
+    </div>
 
-    /* 表單與彈出視窗 */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-start; overflow-y: auto; padding-top: 40px; padding-bottom: 40px; }
-    .modal-content { background: white; width: 90%; max-width: 900px; padding: 25px; border-radius: 12px; position: relative; }
-    .task-input-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 15px; position: relative; }
-    .task-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-    .task-grid select, .task-grid input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    .full-width { grid-column: span 3; }
-    .conflict-alert { background: #ffe3e5; border-left: 4px solid #dc3545; padding: 10px; margin-top: 10px; font-size: 13px; color: #dc3545; border-radius: 4px; font-weight: bold; }
-
-    /* 系統載入中遮罩 */
-    .sys-loading { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; font-size: 18px; font-weight: bold; color: var(--primary); }
-    .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
-</head>
-<body>
-
-  <div id="sysLoading" class="sys-loading">
-    <div class="spinner"></div>
-    <div id="sysLoadingText">系統連線中，請稍候...</div>
-  </div>
-
-  <h1 id="pageTitle">📊 企業營運戰情中樞</h1>
-
-  <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('view-overview')">📈 總覽儀表板</button>
-    <button class="tab-btn" onclick="switchTab('view-ai-meeting')">🎙️ AI 語音會議室</button>
-  </div>
-
-  <div id="view-overview" class="tab-content active">
-    <div class="dashboard-grid">
-      <div class="card">
-        <h3>📌 快速操作</h3>
-        <p>歡迎使用企業戰情中樞。您可以切換至「AI 語音會議室」進行會議錄音與自動萃取待辦事項。</p>
-        <button class="btn btn-primary" onclick="openBatchModal()">➕ 手動新增任務</button>
+    <div class="global-header" id="globalHeaderBlock">
+      <div class="filter-box" id="filterBox">
+        <select id="userFilter" onchange="renderDashboard()"><option value="all">👥 全體成員 (顯示全部)</option></select>
+        <select id="projectFilter" onchange="renderDashboard()"><option value="all">📁 所有專案/部門</option></select>
+        <select id="conclusionStatusFilter" onchange="renderDashboard()" style="display:none; border-color: #27ae60; color: #27ae60;">
+          <option value="進行中">🟢 結論：進行中</option><option value="已封存">📁 結論：已封存</option><option value="all">🔍 結論：全部</option>
+        </select>
       </div>
-      <div class="card">
-        <h3>💡 系統狀態</h3>
-        <p id="systemStatus">等待資料載入中...</p>
+      <div class="kpi-container" id="kpiBoard">
+        <div class="kpi-card danger"><div class="kpi-title">🚨 逾期待辦</div><div class="kpi-value danger-text" id="kpi-overdue">0</div></div>
+        <div class="kpi-card warning"><div class="kpi-title">⚖️ 待主管審批</div><div class="kpi-value" id="kpi-pending">0</div></div>
+        <div class="kpi-card progress"><div class="kpi-title">🏃‍♂️ 執行中</div><div class="kpi-value" id="kpi-progress">0</div></div>
       </div>
     </div>
-  </div>
 
-  <div id="view-ai-meeting" class="tab-content">
-    <div class="card">
-      <h3>🎙️ 智能會議助理</h3>
-      <div class="meeting-controls">
-        <button id="btnStartRecord" class="btn btn-primary" onclick="startDictation()">🎤 開始錄音</button>
-        <button id="btnStopRecord" class="btn btn-danger" onclick="stopDictation()" style="display:none;">⏹ 停止錄音</button>
-        <button id="btnBossMode" class="btn btn-warning" onclick="toggleBossMode()" style="display:none;">👑 標記：老闆裁示 (開啟)</button>
-        <span id="recordingIndicator" class="recording-indicator">🔴 錄音中...</span>
-      </div>
-      <textarea id="transcriptBox" class="transcript-box" placeholder="錄音內容將顯示於此... (您也可以直接貼上現有的會議逐字稿)"></textarea>
-      <div style="margin-top: 15px; text-align: right;">
-        <button class="btn btn-success" onclick="callAIToProcess()">🤖 呼叫 AI 梳理與防撞檢查</button>
+    <div id="loading" class="loading">⏳ 戰情資料即時載入中...</div>
+
+    <div id="view-overview" class="tab-content active">
+      <div class="overview-table-container">
+        <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #212529; text-align: left;">👥 全員待辦數據統計</h3>
+        <table class="overview-table">
+          <thead><tr><th style="text-align: left; width: 20%;">成員 (暱稱)</th><th style="width: 15%;">🚨 逾期</th><th style="width: 15%;">⚖️ 待審批</th><th style="width: 15%;">🏃‍♂️ 進行中</th><th style="width: 15%;">📊 待辦總計</th><th style="width: 20%; color: #27ae60;">📌 相關結論</th></tr></thead>
+          <tbody id="overviewBody"></tbody>
+        </table>
       </div>
     </div>
-  </div>
 
-  <div id="batchModal" class="modal-overlay">
-    <div class="modal-content">
-      <h2 style="margin-top:0; color:#2c3e50;">📝 任務建立與草稿審查</h2>
-      <div id="dynamicTasksContainer">
+    <div id="view-details" class="tab-content"><div id="dashboard" class="container"></div></div>
+    <div id="view-conclusions" class="tab-content"><div id="conclusionsDashboard" class="container"></div></div>
+
+    <div id="view-meeting" class="tab-content">
+      <div class="meeting-container">
+        <div class="mic-toolbar">
+          <button id="btnMicStart" class="btn-mic start" onclick="startDictation()">🎤 開始錄音</button>
+          <button id="btnMicStop" class="btn-mic stop" onclick="stopDictation()">⏹️ 停止錄音</button>
+          
+          <button id="btnBossToggle" class="btn-boss" onclick="toggleBossMode()">👑 標記：老闆裁示 (點擊開啟)</button>
+          
+          <div style="flex-grow: 1;"></div>
+          <button class="btn-primary-custom" style="background:#8e44ad;" onclick="callAIToProcess()">🤖 呼叫 AI 梳理與防撞檢查</button>
         </div>
-      <div style="margin-top: 15px; display: flex; justify-content: space-between;">
-        <button class="btn btn-primary" onclick="addBatchRow()">➕ 新增一筆</button>
-        <div>
-          <button class="btn" style="background:#95a5a6;" onclick="closeBatchModal()">取消</button>
-          <button class="btn btn-success" onclick="submitBatchTasks()">✅ 確認發佈 (寫入並通知)</button>
+        
+        <div id="transcriptBox" contenteditable="true" placeholder="點擊開始錄音，或直接在此貼上 Google Meet 的逐字稿..."></div>
+        <div style="margin-top: 10px; font-size: 13px; color: #888;">💡 提示：一般討論會以灰色顯示作為 AI 背景參考。按下「老闆裁示」後，文字會變成金色，AI 會以此作為聖旨萃取待辦與結論。</div>
+      </div>
+    </div>
+
+    <button class="fab-button" onclick="openBatchModal()">➕ 批量建立</button>
+    <div id="sysLoading" class="sys-loading"><div id="sysLoadingText">🔄 系統處理中，請稍候...</div></div>
+    <div id="batchModal" class="custom-modal-overlay">
+      <div class="custom-modal-content">
+        <div class="custom-modal-header">
+          <h3 id="modalTitle">🚀 批量建立與審核中心</h3>
+          <a class="close-btn" onclick="closeBatchModal()">×</a>
+        </div>
+        <div class="custom-modal-body" id="dynamicTasksContainer"></div>
+        <div class="custom-modal-footer">
+          <button class="btn-outline-custom" onclick="addBatchRow()">➕ 手動新增一筆</button>
+          <button class="btn-primary-custom" onclick="submitBatchTasks()">🚀 確認無誤，寫入並通知</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    // ⭐⭐⭐ 這是最重要的設定！把您在 GAS 部署拿到的網址貼在這裡 ⭐⭐⭐
+<script>
+    // ⭐ 這是最重要的設定！把您在 GAS 部署拿到的網址貼在這裡！
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyKxIMQx_K_-3QmP1lJBOtk1a-GSDsfZgCCNWV9IQjQJ1i3d7ooKQ6K8Flk1ojhcRYMcw/exec"; 
 
     let globalData = null; 
@@ -131,35 +168,32 @@
     // 網頁一載入，就去跟後台要資料
     window.onload = async function() {
       try {
-        document.getElementById('sysLoadingText').innerText = "正在載入後台資料...";
+        if(document.getElementById('sysLoadingText')) document.getElementById('sysLoadingText').innerText = "正在載入後台資料...";
         
-        // 抓取人員與部門名單 (給下拉選單用)
         const formRes = await fetch(GAS_API_URL + "?action=getFormsData");
         const formData = await formRes.json();
         sysUsers = formData.users || []; 
         sysDepts = formData.depts || [];
         
-        document.getElementById('systemStatus').innerHTML = `✅ 資料庫連線成功！<br>共載入 ${sysUsers.length} 位同仁資料。`;
-        document.getElementById('sysLoading').style.display = 'none'; 
+        if(document.getElementById('systemStatus')) document.getElementById('systemStatus').innerHTML = `✅ 資料庫連線成功！<br>共載入 ${sysUsers.length} 位同仁資料。`;
+        if(document.getElementById('sysLoading')) document.getElementById('sysLoading').style.display = 'none'; 
         
       } catch (error) {
-        document.getElementById('sysLoadingText').innerText = "❌ 載入失敗，請確認 API 網址是否正確。";
+        if(document.getElementById('sysLoadingText')) document.getElementById('sysLoadingText').innerText = "❌ 載入失敗，請確認 API 網址是否正確。";
         console.error("Fetch error:", error);
       }
-      
       initSpeechRecognition();
     };
 
-    // 切換頁籤
     function switchTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById(tabId).classList.add('active');
+      if(event && event.target) event.target.classList.add('active');
+      if(document.getElementById(tabId)) document.getElementById(tabId).classList.add('active');
     }
 
     // ==========================================
-    // 🎤 語音辨識邏輯 (麥克風脫鉤解鎖區)
+    // 🎤 語音辨識邏輯
     // ==========================================
     function initSpeechRecognition() {
       if ('webkitSpeechRecognition' in window) {
@@ -179,15 +213,11 @@
           }
           if (finalTranscript !== '') {
             const box = document.getElementById('transcriptBox');
-            box.value += finalTranscript;
-            box.scrollTop = box.scrollHeight;
+            if(box) { box.value += finalTranscript; box.scrollTop = box.scrollHeight; }
           }
         };
-
         recognition.onerror = function(event) { console.error("語音辨識錯誤: ", event.error); };
-        recognition.onend = function() {
-          if (isRecording) recognition.start(); // 防止意外中斷，自動重啟
-        };
+        recognition.onend = function() { if (isRecording) recognition.start(); };
       } else {
         alert("⚠️ 您的瀏覽器不支援語音辨識，請使用 Google Chrome。");
       }
@@ -195,62 +225,50 @@
 
     function startDictation() {
       if (!recognition) return alert("瀏覽器不支援語音功能");
-      recognition.start();
-      isRecording = true;
-      document.getElementById('btnStartRecord').style.display = 'none';
-      document.getElementById('btnStopRecord').style.display = 'inline-block';
-      document.getElementById('btnBossMode').style.display = 'inline-block';
-      document.getElementById('recordingIndicator').style.display = 'inline-block';
+      recognition.start(); isRecording = true;
+      if(document.getElementById('btnStartRecord')) document.getElementById('btnStartRecord').style.display = 'none';
+      if(document.getElementById('btnStopRecord')) document.getElementById('btnStopRecord').style.display = 'inline-block';
+      if(document.getElementById('btnBossMode')) document.getElementById('btnBossMode').style.display = 'inline-block';
+      if(document.getElementById('recordingIndicator')) document.getElementById('recordingIndicator').style.display = 'inline-block';
     }
 
     function stopDictation() {
-      isRecording = false;
-      recognition.stop();
-      document.getElementById('btnStartRecord').style.display = 'inline-block';
-      document.getElementById('btnStopRecord').style.display = 'none';
-      document.getElementById('btnBossMode').style.display = 'none';
-      document.getElementById('recordingIndicator').style.display = 'none';
+      isRecording = false; recognition.stop();
+      if(document.getElementById('btnStartRecord')) document.getElementById('btnStartRecord').style.display = 'inline-block';
+      if(document.getElementById('btnStopRecord')) document.getElementById('btnStopRecord').style.display = 'none';
+      if(document.getElementById('btnBossMode')) document.getElementById('btnBossMode').style.display = 'none';
+      if(document.getElementById('recordingIndicator')) document.getElementById('recordingIndicator').style.display = 'none';
     }
 
     function toggleBossMode() {
       isBossMode = !isBossMode;
       const btn = document.getElementById('btnBossMode');
-      if (isBossMode) {
-        btn.innerText = "👑 標記：老闆裁示 (關閉)";
-        btn.style.background = "#e74c3c";
-      } else {
-        btn.innerText = "👑 標記：老闆裁示 (開啟)";
-        btn.style.background = "#f1c40f";
+      if(btn) {
+        if (isBossMode) { btn.innerText = "👑 標記：老闆裁示 (關閉)"; btn.style.background = "#e74c3c"; } 
+        else { btn.innerText = "👑 標記：老闆裁示 (開啟)"; btn.style.background = "#f1c40f"; }
       }
     }
 
-    // ==========================================
-    // 🤖 呼叫 AI 與資料送出邏輯
-    // ==========================================
     async function callAIToProcess() {
-      const text = document.getElementById('transcriptBox').value.trim();
+      const box = document.getElementById('transcriptBox');
+      const text = box ? box.value.trim() : "";
       if (text.length < 10) { alert("請先錄音或貼上足夠的會議紀錄內容！"); return; }
-      
-      alert("✅ 麥克風與前端脫鉤測試成功！\n您剛剛輸入的內容長度為：" + text.length + " 字。\n\n(目前為安全測試模式，確認錄音正常後，我們再接上真正的 AI 大腦)");
-      // 為了避免一開始就報錯，先用測試訊息。確認您能順利錄音後，我會教您把這行換成真實的 AI 呼叫！
+      alert("✅ 麥克風與前端脫鉤測試成功！\n字數：" + text.length + " 字。\n(確認錄音正常後，我們再接上 AI 大腦)");
     }
 
-    // 打開發佈視窗
     function openBatchModal() {
-      document.getElementById('dynamicTasksContainer').innerHTML = '';
+      if(document.getElementById('dynamicTasksContainer')) document.getElementById('dynamicTasksContainer').innerHTML = '';
       addBatchRow();
-      document.getElementById('batchModal').style.display = 'flex';
+      if(document.getElementById('batchModal')) document.getElementById('batchModal').style.display = 'flex';
     }
 
-    function closeBatchModal() { document.getElementById('batchModal').style.display = 'none'; }
+    function closeBatchModal() { 
+      if(document.getElementById('batchModal')) document.getElementById('batchModal').style.display = 'none'; 
+    }
 
-    // 新增一筆任務卡片
     function addBatchRow() {
-      let deptOptions = '<option value="">選擇部門</option>';
-      sysDepts.forEach(d => deptOptions += `<option value="${d}">${d}</option>`);
-      let userOptions = '<option value="">選擇負責人</option>';
-      sysUsers.forEach(u => userOptions += `<option value="${u}">${u}</option>`);
-
+      let deptOptions = '<option value="">選擇部門</option>'; sysDepts.forEach(d => deptOptions += `<option value="${d}">${d}</option>`);
+      let userOptions = '<option value="">選擇負責人</option>'; sysUsers.forEach(u => userOptions += `<option value="${u}">${u}</option>`);
       const cardHtml = `
         <div class="task-input-card">
           <button style="position:absolute; top:10px; right:10px; background:red; color:white; border:none; border-radius:50%; cursor:pointer;" onclick="this.parentElement.remove()">X</button>
@@ -263,57 +281,37 @@
             <input type="text" class="t-summary" placeholder="主旨摘要 (必填)">
             <input type="text" class="t-details full-width" placeholder="詳細說明...">
           </div>
-        </div>
-      `;
-      document.getElementById('dynamicTasksContainer').insertAdjacentHTML('beforeend', cardHtml);
+        </div>`;
+      if(document.getElementById('dynamicTasksContainer')) document.getElementById('dynamicTasksContainer').insertAdjacentHTML('beforeend', cardHtml);
     }
 
     function toggleDate(selectElem) {
       const dateInput = selectElem.parentElement.querySelector('.t-date');
-      dateInput.disabled = (selectElem.value === '結論');
-      if (selectElem.value === '結論') dateInput.value = '';
+      if(dateInput) { dateInput.disabled = (selectElem.value === '結論'); if (selectElem.value === '結論') dateInput.value = ''; }
     }
 
-    // 送出至後台
     async function submitBatchTasks() {
       const cards = document.querySelectorAll('.task-input-card');
       let tasks = []; let hasError = false;
       cards.forEach((card, index) => {
         const recordType = card.querySelector('.t-record-type').value;
-        const level = card.querySelector('.t-level').value; 
-        const dept = card.querySelector('.t-dept').value;
-        const owner = card.querySelector('.t-owner').value; 
-        const date = card.querySelector('.t-date').value;
-        const summary = card.querySelector('.t-summary').value.trim(); 
-        const details = card.querySelector('.t-details').value.trim();
-        
-        if(!dept || !owner || !summary || (recordType === '待辦' && !date)) { 
-          alert(`第 ${index + 1} 筆紀錄資料不完整！(部門、負責人、主旨、日期為必填)`); 
-          hasError = true; return; 
-        }
+        const level = card.querySelector('.t-level').value; const dept = card.querySelector('.t-dept').value;
+        const owner = card.querySelector('.t-owner').value; const date = card.querySelector('.t-date').value;
+        const summary = card.querySelector('.t-summary').value.trim(); const details = card.querySelector('.t-details').value.trim();
+        if(!dept || !owner || !summary || (recordType === '待辦' && !date)) { alert(`第 ${index + 1} 筆紀錄資料不完整！`); hasError = true; return; }
         tasks.push({ recordType, level, dept, owner, dueDate: date, summary, details, coOwners: "", overrideId: "" });
       });
-
       if(hasError || tasks.length === 0) return;
-      if(confirm(`確定送出這 ${tasks.length} 筆紀錄並發布 LINE 通知嗎？`)) {
-        document.getElementById('sysLoading').style.display = 'flex';
-        document.getElementById('sysLoadingText').innerText = "🔄 寫入資料與發送 LINE 通知中...";
-        
+      if(confirm(`確定送出這 ${tasks.length} 筆紀錄嗎？`)) {
+        if(document.getElementById('sysLoading')) document.getElementById('sysLoading').style.display = 'flex';
+        if(document.getElementById('sysLoadingText')) document.getElementById('sysLoadingText').innerText = "🔄 寫入資料與發送 LINE 通知中...";
         try {
-          const response = await fetch(GAS_API_URL + "?action=submitTasks", {
-            method: 'POST',
-            body: JSON.stringify(tasks),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-          });
+          const response = await fetch(GAS_API_URL + "?action=submitTasks", { method: 'POST', body: JSON.stringify(tasks), headers: { 'Content-Type': 'text/plain;charset=utf-8' } });
           const result = await response.json();
-          if(result.status === 'success') {
-             alert(`🎉 成功寫入 ${result.count} 筆紀錄！`);
-             closeBatchModal();
-             window.location.reload(); 
-          } else { throw new Error(result.message); }
+          if(result.status === 'success') { alert(`🎉 成功寫入 ${result.count} 筆紀錄！`); closeBatchModal(); window.location.reload(); } 
+          else { throw new Error(result.message); }
         } catch(err) {
-           document.getElementById('sysLoading').style.display = 'none'; 
-           alert("❌ 送出失敗：\n" + err.message);
+           if(document.getElementById('sysLoading')) document.getElementById('sysLoading').style.display = 'none'; alert("❌ 送出失敗：\n" + err.message);
         }
       }
     }
